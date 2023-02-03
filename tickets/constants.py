@@ -1,9 +1,15 @@
 class TicketStatus:
     OPEN = "open"
     IN_PROGRESS = "in_progress"
-    CLOSED = "closed"
+    CANCELLED = "cancelled"
+    RESOLVED = "resolved"
 
-    choices = ((OPEN, "Open"), (IN_PROGRESS, "In progress"), (CLOSED, "closed"))
+    choices = (
+        (OPEN, "Open"),
+        (IN_PROGRESS, "In progress"),
+        (CANCELLED, "Cancelled"),
+        (RESOLVED, "Resolved"),
+    )
 
 
 class TicketPriority:

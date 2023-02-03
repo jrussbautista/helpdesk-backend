@@ -40,3 +40,16 @@ class Ticket(models.Model):
         on_delete=models.CASCADE,
         related_name="created_by_tickets",
     )
+
+    # Mutators
+    def in_progress(self):
+        self.status = constants.TicketStatus.IN_PROGRESS
+        self.save()
+
+    def cancel(self):
+        self.status = constants.TicketStatus.CANCELLED
+        self.save()
+
+    def resolved(self):
+        self.status = constants.TicketStatus.RESOLVED
+        self.save()

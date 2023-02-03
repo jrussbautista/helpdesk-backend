@@ -1,3 +1,8 @@
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from drf_rw_serializers.viewsets import ModelViewSet
+
 from .models import Ticket, TicketType
 from .serializers import (
     TicketReadSerializer,
@@ -5,8 +10,7 @@ from .serializers import (
     TicketTypeSerializer,
     TicketTypeWriteSerializer,
 )
-from rest_framework.permissions import IsAuthenticated
-from drf_rw_serializers.viewsets import ModelViewSet
+from .permissions import IsTicketOwner
 
 
 class TicketViewSet(ModelViewSet):
@@ -17,6 +21,15 @@ class TicketViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
+    @action(
+        detail=True, methods=["post"], permission_classes=[IsAdminUser | IsTicketOwner]
+    )
+    def resolved(self, request, pk=None):
+        ticket = self.get_object()
+        ticket.resolved()
+        serializer = self.serializer_class(ticket)
+        return Response(serializer.data)
 
 
 class TicketTypeViewSet(ModelViewSet):
