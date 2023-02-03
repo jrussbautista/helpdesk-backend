@@ -23,6 +23,8 @@ class TicketReadSerializer(serializers.ModelSerializer):
             "id",
             "title",
             "description",
+            "status",
+            "priority",
             "created_at",
             "updated_at",
             "type",
@@ -40,4 +42,4 @@ class TicketReadSerializer(serializers.ModelSerializer):
 class TicketWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
-        fields = ["title", "description", "type", "project", "assigned_to"]
+        fields = ["title", "description", "priority", "type", "project", "assigned_to"]

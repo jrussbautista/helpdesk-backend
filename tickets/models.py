@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from projects.models import Project
+from tickets import constants
 
 
 class TicketType(models.Model):
@@ -20,6 +21,16 @@ class Ticket(models.Model):
     )
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name="tickets"
+    )
+    status = models.CharField(
+        choices=constants.TicketStatus.choices,
+        default=constants.TicketStatus.OPEN,
+        max_length=100,
+    )
+    priority = models.CharField(
+        choices=constants.TicketPriority.choices,
+        default=constants.TicketPriority.NORMAL,
+        max_length=100,
     )
     assigned_to = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="tickets"
