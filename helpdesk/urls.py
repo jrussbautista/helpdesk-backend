@@ -21,4 +21,5 @@ urlpatterns = [
     path("auth/", include("djoser.urls")),
     path("auth/", include("djoser.urls.authtoken")),
     path("", include("tickets.urls")),
+    path("", include("projects.urls")),
 ]
