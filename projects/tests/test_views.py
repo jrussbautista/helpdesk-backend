@@ -7,8 +7,13 @@ import pytest
 
 
 @pytest.fixture
+def project_payload():
+    return {"name": "Test Project", "description": "test project description"}
+
+
+@pytest.fixture
 def create_project(api_client):
-    def do_create_project(project):
+    def do_create_project(project={}):
         return api_client.post(
             "/projects/",
             project,
@@ -19,22 +24,22 @@ def create_project(api_client):
 
 @pytest.mark.django_db
 class TestCreateProject:
-    def test_logged_in_user_can_create_project(self, authenticate, create_project):
+    def test_logged_in_user_can_create_project(
+        self, authenticate, create_project, project_payload
+    ):
         authenticate()
-        response = create_project(
-            {"name": "Test Project", "description": "test description"}
-        )
+        response = create_project(project_payload)
         assert response.status_code == HTTP_201_CREATED
 
     def test_cannot_create_project_if_data_is_invalid(
         self, authenticate, create_project
     ):
         authenticate()
-        response = create_project({"name": "", "description": ""})
+        response = create_project()
         assert response.status_code == HTTP_400_BAD_REQUEST
 
-    def test_anonymous_user_cannot_create_project(self, create_project):
-        response = create_project(
-            {"name": "Test Project", "description": "test project description"},
-        )
+    def test_anonymous_user_cannot_create_project(
+        self, create_project, project_payload
+    ):
+        response = create_project(project_payload)
         assert response.status_code == HTTP_401_UNAUTHORIZED
