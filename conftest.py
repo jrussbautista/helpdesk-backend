@@ -12,6 +12,7 @@ def api_client():
 def authenticate(api_client):
     def do_authenticate():
         user = UserFactory()
-        return api_client.force_authenticate(user=user)
+        api_client.force_authenticate(user=user)
+        return user
 
     return do_authenticate

@@ -10,3 +10,4 @@ class UserFactory(factory.django.DjangoModelFactory):
     username = factory.LazyAttribute(
         lambda _: faker.profile(fields=["username"])["username"]
     )
+    email = factory.LazyAttribute(lambda _: faker.email())
