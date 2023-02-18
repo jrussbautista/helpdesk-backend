@@ -4,11 +4,27 @@ from projects.factories import ProjectFactory
 
 
 @pytest.fixture
+def get_projects(api_client):
+    def do_get_projects():
+        return api_client.get("/projects/")
+
+    return do_get_projects
+
+
+@pytest.fixture
+def get_project(api_client):
+    def do_get_project(id):
+        return api_client.get(f"/projects/{id}/")
+
+    return do_get_project
+
+
+@pytest.fixture
 def create_project(api_client):
-    def do_create_project(project):
+    def do_create_project(id):
         return api_client.post(
             "/projects/",
-            project,
+            id,
         )
 
     return do_create_project
@@ -38,6 +54,49 @@ def user_project(authenticate):
     user = authenticate()
     project = ProjectFactory(owner=user)
     return project
+
+
+@pytest.mark.django_db
+class TestViewProjects:
+    def test_logged_in_user_can_view_owned_projects(self, authenticate, get_projects):
+        user = authenticate()
+        project1 = ProjectFactory(owner=user)
+        ProjectFactory(owner=user)
+        response = get_projects()
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 2
+        assert response.data[0]["name"] == project1.name
+        assert response.data[0]["description"] == project1.description
+
+    def test_logged_in_user_can_view_owned_individual_project(
+        self, user_project, get_project
+    ):
+        response = get_project(user_project.id)
+        assert response.data["name"] == user_project.name
+        assert response.data["description"] == user_project.description
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_cannot_view_someones_projects(self, authenticate, get_projects):
+        authenticate()
+        ProjectFactory()
+        response = get_projects()
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 0
+
+    def test_cannot_view_someones_individual_project(self, authenticate, get_project):
+        project = ProjectFactory()
+        authenticate()
+        response = get_project(project.id)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_anonymous_user_cannot_view_projects(self, get_projects):
+        response = get_projects()
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_anonymous_user_cannot_view_individual_project(self, get_project):
+        project = ProjectFactory()
+        response = get_project(project.id)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.django_db
