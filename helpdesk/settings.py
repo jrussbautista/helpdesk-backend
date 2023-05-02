@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "authentication",
     "projects",
     "tickets",
+    "django_filters"
 ]
 
 MIDDLEWARE = [

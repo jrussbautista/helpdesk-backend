@@ -1,8 +1,11 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 from drf_rw_serializers.viewsets import ModelViewSet
+from .filters import TicketFilter
+
 
 from .models import Ticket, TicketType
 from .serializers import (
@@ -20,6 +23,8 @@ class TicketViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = TicketReadSerializer
     write_serializer_class = TicketWriteSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TicketFilter
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)

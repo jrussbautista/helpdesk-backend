@@ -1,7 +1,15 @@
 from rest_framework import status
 import pytest
 from tickets.factories import TicketFactory
-from tickets.constants import TicketStatus
+from tickets.constants import TicketStatus, TicketPriority
+
+
+@pytest.fixture
+def get_tickets(api_client):
+    def do_get_tickets(params=""):
+        return api_client.get(f"/tickets/?{params}")
+
+    return do_get_tickets
 
 
 @pytest.fixture
@@ -141,3 +149,62 @@ class TestMarkTicketAsProcessing:
         ticket = TicketFactory()
         response = processing_ticket(ticket.id)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.django_db
+class TestFilterTicket:
+    def test_filter_ticket_by_status(self, authenticate, get_tickets):
+        user = authenticate()
+        TicketFactory(created_by=user, status=TicketStatus.OPEN)
+        TicketFactory(created_by=user, status=TicketStatus.PROCESSING)
+        TicketFactory(created_by=user, status=TicketStatus.PROCESSING)
+        TicketFactory(created_by=user, status=TicketStatus.RESOLVED)
+        TicketFactory(created_by=user, status=TicketStatus.CANCELLED)
+
+        open_tickets = get_tickets(params=f"status={TicketStatus.OPEN}")
+        assert len(open_tickets.json()) == 1
+
+        processing_tickets = get_tickets(params=f"status={TicketStatus.PROCESSING}")
+        assert len(processing_tickets.json()) == 2
+
+        resolved_tickets = get_tickets(params=f"status={TicketStatus.RESOLVED}")
+        assert len(resolved_tickets.json()) == 1
+
+        cancelled_tickets = get_tickets(params=f"status={TicketStatus.CANCELLED}")
+        assert len(cancelled_tickets.json()) == 1
+
+        mixed_tickets = get_tickets(
+            params=f"status={TicketStatus.PROCESSING},{TicketStatus.OPEN}"
+        )
+        assert len(mixed_tickets.json()) == 3
+
+        all_tickets = get_tickets(
+            params=f"status={TicketStatus.OPEN},{TicketStatus.PROCESSING},{TicketStatus.RESOLVED},{TicketStatus.CANCELLED}"
+        )
+        assert len(all_tickets.json()) == 5
+
+    def test_filter_ticket_by_priority(self, authenticate, get_tickets):
+        user = authenticate()
+        TicketFactory(created_by=user, priority=TicketPriority.MEDIUM)
+        TicketFactory(created_by=user, priority=TicketPriority.MEDIUM)
+        TicketFactory(created_by=user, priority=TicketPriority.HIGH)
+        TicketFactory(created_by=user, priority=TicketPriority.NORMAL)
+
+        normal_tickets = get_tickets(params=f"priority={TicketPriority.NORMAL}")
+        assert len(normal_tickets.json()) == 1
+
+        medium_tickets = get_tickets(params=f"priority={TicketPriority.MEDIUM}")
+        assert len(medium_tickets.json()) == 2
+
+        high_tickets = get_tickets(params=f"priority={TicketPriority.HIGH}")
+        assert len(high_tickets.json()) == 1
+
+        mixed_tickets = get_tickets(
+            params=f"priority={TicketPriority.MEDIUM},{TicketPriority.HIGH}"
+        )
+        assert len(mixed_tickets.json()) == 3
+
+        all_tickets = get_tickets(
+            params=f"priority={TicketPriority.NORMAL},{TicketPriority.MEDIUM},{TicketPriority.HIGH}"
+        )
+        assert len(all_tickets.json()) == 4
