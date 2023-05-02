@@ -42,8 +42,8 @@ class Ticket(models.Model):
     )
 
     # Mutators
-    def in_progress(self):
-        self.status = constants.TicketStatus.IN_PROGRESS
+    def processing(self):
+        self.status = constants.TicketStatus.PROCESSING
         self.save()
 
     def cancel(self):

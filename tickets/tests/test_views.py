@@ -20,6 +20,14 @@ def cancel_ticket(api_client):
     return do_cancel_ticket
 
 
+@pytest.fixture
+def processing_ticket(api_client):
+    def do_processing_ticket(id):
+        return api_client.post(f"/tickets/{id}/processing/")
+
+    return do_processing_ticket
+
+
 @pytest.mark.django_db
 class TestMarkTicketAsResolved:
     def test_logged_in_user_can_mark_ticket_as_resolved(
@@ -64,11 +72,11 @@ class TestMarkTicketAsCancelled:
         assert response.status_code == status.HTTP_200_OK
         assert response.data["status"] == TicketStatus.CANCELLED
 
-    def test_in_progress_ticket_cannot_mark_ticket_as_cancelled(
+    def test_processing_ticket_cannot_mark_ticket_as_cancelled(
         self, authenticate, cancel_ticket
     ):
         user = authenticate()
-        ticket = TicketFactory(created_by=user, status=TicketStatus.IN_PROGRESS)
+        ticket = TicketFactory(created_by=user, status=TicketStatus.PROCESSING)
         response = cancel_ticket(ticket.id)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -91,4 +99,45 @@ class TestMarkTicketAsCancelled:
     def test_anonymous_user_cannot_mark_ticket_as_cancelled(self, cancel_ticket):
         ticket = TicketFactory()
         response = cancel_ticket(ticket.id)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.django_db
+class TestMarkTicketAsProcessing:
+    def test_logged_in_user_can_mark_ticket_as_processing(
+        self, authenticate, processing_ticket
+    ):
+        user = authenticate()
+        ticket = TicketFactory(created_by=user)
+        response = processing_ticket(ticket.id)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["status"] == TicketStatus.PROCESSING
+
+    def test_cancelled_ticket_cannot_mark_ticket_as_processing(
+        self, authenticate, processing_ticket
+    ):
+        user = authenticate()
+        ticket = TicketFactory(created_by=user, status=TicketStatus.CANCELLED)
+        response = processing_ticket(ticket.id)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_resolved_ticket_cannot_mark_ticket_as_processing(
+        self, authenticate, processing_ticket
+    ):
+        user = authenticate()
+        ticket = TicketFactory(created_by=user, status=TicketStatus.RESOLVED)
+        response = processing_ticket(ticket.id)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_user_cannot_mark_other_ticket_as_processing(
+        self, authenticate, processing_ticket
+    ):
+        authenticate()
+        ticket_by_other = TicketFactory()
+        response = processing_ticket(ticket_by_other.id)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_anonymous_user_cannot_mark_ticket_as_processing(self, processing_ticket):
+        ticket = TicketFactory()
+        response = processing_ticket(ticket.id)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED

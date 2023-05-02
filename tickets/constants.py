@@ -1,12 +1,12 @@
 class TicketStatus:
     OPEN = "open"
-    IN_PROGRESS = "in_progress"
+    PROCESSING = "processing"
     CANCELLED = "cancelled"
     RESOLVED = "resolved"
 
     choices = (
         (OPEN, "Open"),
-        (IN_PROGRESS, "In progress"),
+        (PROCESSING, "processing"),
         (CANCELLED, "Cancelled"),
         (RESOLVED, "Resolved"),
     )

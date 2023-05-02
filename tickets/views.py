@@ -25,7 +25,24 @@ class TicketViewSet(ModelViewSet):
         serializer.save(created_by=self.request.user)
 
     @action(
-        detail=True, methods=["post"], permission_classes=[IsAdminUser | IsTicketOwner]
+        detail=True,
+        methods=["post"],
+        permission_classes=[IsAdminUser | IsTicketOwner],
+        url_path="processing",
+    )
+    def processing(self, request, pk=None):
+        ticket = self.get_object()
+        if ticket.status in [TicketStatus.CANCELLED, TicketStatus.RESOLVED]:
+            return Response(status=HTTP_400_BAD_REQUEST)
+        ticket.processing()
+        serializer = self.serializer_class(ticket)
+        return Response(serializer.data)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        permission_classes=[IsAdminUser | IsTicketOwner],
+        url_path="resolved",
     )
     def resolved(self, request, pk=None):
         ticket = self.get_object()
@@ -36,11 +53,14 @@ class TicketViewSet(ModelViewSet):
         return Response(serializer.data)
 
     @action(
-        detail=True, methods=["post"], permission_classes=[IsAdminUser | IsTicketOwner]
+        detail=True,
+        methods=["post"],
+        permission_classes=[IsAdminUser | IsTicketOwner],
+        url_path="cancel",
     )
     def cancel(self, request, pk=None):
         ticket = self.get_object()
-        if ticket.status in [TicketStatus.IN_PROGRESS, TicketStatus.RESOLVED]:
+        if ticket.status in [TicketStatus.PROCESSING, TicketStatus.RESOLVED]:
             return Response(status=HTTP_400_BAD_REQUEST)
         ticket.cancel()
         serializer = self.serializer_class(ticket)
