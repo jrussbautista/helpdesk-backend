@@ -7,3 +7,9 @@ git clone https://github.com/jrussbautista/helpdesk-backend
 cd helpdesk-backend
 ./manage.py runserver
 ```
+
+### Run Tests
+
+```
+pytest
+```
