@@ -153,7 +153,7 @@ class TestMarkTicketAsProcessing:
 
 @pytest.mark.django_db
 class TestFilterTicket:
-    def test_filter_ticket_by_status(self, authenticate, get_tickets):
+    def test_filter_tickets_by_status(self, authenticate, get_tickets):
         user = authenticate()
         TicketFactory(created_by=user, status=TicketStatus.OPEN)
         TicketFactory(created_by=user, status=TicketStatus.PROCESSING)
@@ -162,28 +162,28 @@ class TestFilterTicket:
         TicketFactory(created_by=user, status=TicketStatus.CANCELLED)
 
         open_tickets = get_tickets(params=f"status={TicketStatus.OPEN}")
-        assert len(open_tickets.json()) == 1
+        assert len(open_tickets.json()["results"]) == 1
 
         processing_tickets = get_tickets(params=f"status={TicketStatus.PROCESSING}")
-        assert len(processing_tickets.json()) == 2
+        assert len(processing_tickets.json()["results"]) == 2
 
         resolved_tickets = get_tickets(params=f"status={TicketStatus.RESOLVED}")
-        assert len(resolved_tickets.json()) == 1
+        assert len(resolved_tickets.json()["results"]) == 1
 
         cancelled_tickets = get_tickets(params=f"status={TicketStatus.CANCELLED}")
-        assert len(cancelled_tickets.json()) == 1
+        assert len(cancelled_tickets.json()["results"]) == 1
 
         mixed_tickets = get_tickets(
             params=f"status={TicketStatus.PROCESSING},{TicketStatus.OPEN}"
         )
-        assert len(mixed_tickets.json()) == 3
+        assert len(mixed_tickets.json()["results"]) == 3
 
         all_tickets = get_tickets(
             params=f"status={TicketStatus.OPEN},{TicketStatus.PROCESSING},{TicketStatus.RESOLVED},{TicketStatus.CANCELLED}"
         )
-        assert len(all_tickets.json()) == 5
+        assert len(all_tickets.json()["results"]) == 5
 
-    def test_filter_ticket_by_priority(self, authenticate, get_tickets):
+    def test_filter_tickets_by_priority(self, authenticate, get_tickets):
         user = authenticate()
         TicketFactory(created_by=user, priority=TicketPriority.MEDIUM)
         TicketFactory(created_by=user, priority=TicketPriority.MEDIUM)
@@ -191,20 +191,33 @@ class TestFilterTicket:
         TicketFactory(created_by=user, priority=TicketPriority.NORMAL)
 
         normal_tickets = get_tickets(params=f"priority={TicketPriority.NORMAL}")
-        assert len(normal_tickets.json()) == 1
+        assert len(normal_tickets.json()["results"]) == 1
 
         medium_tickets = get_tickets(params=f"priority={TicketPriority.MEDIUM}")
-        assert len(medium_tickets.json()) == 2
+        assert len(medium_tickets.json()["results"]) == 2
 
         high_tickets = get_tickets(params=f"priority={TicketPriority.HIGH}")
-        assert len(high_tickets.json()) == 1
+        assert len(high_tickets.json()["results"]) == 1
 
         mixed_tickets = get_tickets(
             params=f"priority={TicketPriority.MEDIUM},{TicketPriority.HIGH}"
         )
-        assert len(mixed_tickets.json()) == 3
+        assert len(mixed_tickets.json()["results"]) == 3
 
         all_tickets = get_tickets(
             params=f"priority={TicketPriority.NORMAL},{TicketPriority.MEDIUM},{TicketPriority.HIGH}"
         )
         assert len(all_tickets.json()) == 4
+
+    def test_filter_tickets_by_page_and_page_size(self, authenticate, get_tickets):
+        user = authenticate()
+        TicketFactory(created_by=user)
+        TicketFactory(created_by=user)
+        TicketFactory(created_by=user)
+        TicketFactory(created_by=user)
+
+        first_page_tickets = get_tickets(params="page=1&page_size=2")
+        assert len(first_page_tickets.json()["results"]) == 2
+
+        second_page_tickets = get_tickets(params="page=2&page_size=2")
+        assert len(second_page_tickets.json()["results"]) == 2
