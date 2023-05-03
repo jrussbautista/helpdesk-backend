@@ -152,7 +152,7 @@ class TestMarkTicketAsProcessing:
 
 
 @pytest.mark.django_db
-class TestFilterTicket:
+class TestFilterTickets:
     def test_filter_tickets_by_status(self, authenticate, get_tickets):
         user = authenticate()
         TicketFactory(created_by=user, status=TicketStatus.OPEN)
@@ -221,3 +221,27 @@ class TestFilterTicket:
 
         second_page_tickets = get_tickets(params="page=2&page_size=2")
         assert len(second_page_tickets.json()["results"]) == 2
+
+
+@pytest.mark.django_db
+class TestSearchTicket:
+    def test_filter_tickets_by_search(self, authenticate, get_tickets):
+        user = authenticate()
+        TicketFactory(
+            created_by=user, title="First ticket", description="first description"
+        )
+        TicketFactory(
+            created_by=user, title="Second ticket", description="second description"
+        )
+        TicketFactory(
+            created_by=user, title="Third ticket", description="third description"
+        )
+
+        search_results_1 = get_tickets(params="search=ticket")
+        assert len(search_results_1.json()["results"]) == 3
+
+        search_results_2 = get_tickets(params="search=second")
+        assert len(search_results_2.json()["results"]) == 1
+
+        search_results_3 = get_tickets(params="search=nothing")
+        assert len(search_results_3.json()["results"]) == 0

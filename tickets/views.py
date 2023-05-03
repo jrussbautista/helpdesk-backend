@@ -1,5 +1,5 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import OrderingFilter
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -25,11 +25,12 @@ class TicketViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = TicketReadSerializer
     write_serializer_class = TicketWriteSerializer
-    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_class = TicketFilter
     pagination_class = DefaultPagination
     ordering_fields = ["created_at", "updated_at"]
     ordering = ["created_at"]
+    search_fields = ["title", "description"]
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
