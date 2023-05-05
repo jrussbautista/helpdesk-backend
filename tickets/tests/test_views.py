@@ -2,6 +2,7 @@ from rest_framework import status
 import pytest
 from tickets.factories import TicketFactory
 from tickets.constants import TicketStatus, TicketPriority
+from projects.factories import ProjectFactory
 
 
 @pytest.fixture
@@ -222,10 +223,32 @@ class TestFilterTickets:
         second_page_tickets = get_tickets(params="page=2&page_size=2")
         assert len(second_page_tickets.json()["results"]) == 2
 
+    def test_filter_tickets_by_project(self, authenticate, get_tickets):
+        user = authenticate()
+        project1 = ProjectFactory()
+        project2 = ProjectFactory()
+        project3 = ProjectFactory()
+        project4 = ProjectFactory()
+        TicketFactory(created_by=user, project=project1)
+        TicketFactory(created_by=user, project=project2)
+        TicketFactory(created_by=user, project=project3)
+        TicketFactory(created_by=user, project=project4)
+
+        results = get_tickets(params=f"project={project1.id},{project2.id}")
+        assert len(results.json()["results"]) == 2
+
+        results = get_tickets(params=f"project={project1.id}")
+        assert len(results.json()["results"]) == 1
+
+        results = get_tickets(
+            params=f"project={project1.id},{project2.id},{project3.id},{project4.id}"
+        )
+        assert len(results.json()["results"]) == 4
+
 
 @pytest.mark.django_db
 class TestSearchTicket:
-    def test_filter_tickets_by_search(self, authenticate, get_tickets):
+    def test_search_ticket(self, authenticate, get_tickets):
         user = authenticate()
         TicketFactory(
             created_by=user, title="First ticket", description="first description"

@@ -9,6 +9,7 @@ class CharInFilter(django_filters.CharFilter, django_filters.BaseInFilter):
 class TicketFilter(django_filters.FilterSet):
     status = CharInFilter(field_name="status", lookup_expr="in")
     priority = CharInFilter(field_name="priority", lookup_expr="in")
+    project = CharInFilter(field_name="project__id", lookup_expr="in")
 
     class Meta:
         model = Ticket
